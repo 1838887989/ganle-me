@@ -98,7 +98,7 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           name: '干了么 ${{ github.ref_name }}'
-          draft: true
+          draft: false
           prerelease: false
           body: |
             ## 下载安装
