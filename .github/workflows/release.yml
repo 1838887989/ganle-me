@@ -13,45 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  cleanup:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: 清理旧 Release
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set +e
-          TAG="${GITHUB_REF_NAME}"
-          REPO="${GITHUB_REPOSITORY}"
-          # 查找该 tag 对应的 release（包括草稿）
-          RELEASE_ID=$(curl -s -H "Authorization: token $GH_TOKEN" \
-            "https://api.github.com/repos/$REPO/releases/tags/$TAG" | \
-            grep '"id"' | head -1 | grep -o '[0-9]*' || true)
-          if [ -n "$RELEASE_ID" ]; then
-            echo "删除旧 Release ID: $RELEASE_ID"
-            curl -s -X DELETE -H "Authorization: token $GH_TOKEN" \
-              "https://api.github.com/repos/$REPO/releases/$RELEASE_ID"
-          else
-            echo "没有找到 tag $TAG 对应的 Release"
-          fi
-          # 也清理 untagged 的草稿 release
-          DRAFT_IDS=$(curl -s -H "Authorization: token $GH_TOKEN" \
-            "https://api.github.com/repos/$REPO/releases" | \
-            grep -B2 '"draft": true' | grep '"id"' | grep -o '[0-9]*' || true)
-          if [ -n "$DRAFT_IDS" ]; then
-            echo "$DRAFT_IDS" | while read id; do
-              echo "删除草稿 Release ID: $id"
-              curl -s -X DELETE -H "Authorization: token $GH_TOKEN" \
-                "https://api.github.com/repos/$REPO/releases/$id"
-            done
-          else
-            echo "没有草稿 Release 需要清理"
-          fi
-          echo "清理完成"
-
   build:
-    needs: cleanup
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -141,6 +103,9 @@ jobs:
     needs: build
     runs-on: ubuntu-22.04
     steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
       - name: 下载所有构建产物
         uses: actions/download-artifact@v4
         with:
@@ -150,42 +115,24 @@ jobs:
       - name: 列出产物
         run: ls -la all-assets/
 
-      - name: 清理已有 Release
-        shell: bash
+      - name: 删除旧 Release 并创建新 Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set +e
           TAG="${GITHUB_REF_NAME}"
-          REPO="${GITHUB_REPOSITORY}"
-          RELEASE_ID=$(curl -s -H "Authorization: token $GH_TOKEN" \
-            "https://api.github.com/repos/$REPO/releases/tags/$TAG" | \
-            grep '"id"' | head -1 | grep -o '[0-9]*' || true)
-          if [ -n "$RELEASE_ID" ]; then
-            echo "删除已有 Release ID: $RELEASE_ID"
-            curl -s -X DELETE -H "Authorization: token $GH_TOKEN" \
-              "https://api.github.com/repos/$REPO/releases/$RELEASE_ID"
-            echo "已删除"
-          else
-            echo "无需清理"
-          fi
+          # 强制删除已有的 Release（忽略不存在的情况）
+          gh release delete "$TAG" --yes 2>/dev/null || true
+          # 等待 GitHub API 同步
+          sleep 3
+          # 创建新 Release 并上传所有资产
+          gh release create "$TAG" \
+            --title "干了么 $TAG" \
+            --notes "## 下载安装
 
-      - name: 创建 Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: '干了么 ${{ github.ref_name }}'
-          draft: false
-          prerelease: false
-          body: |
-            ## 下载安装
-
-            | 平台 | 文件 |
-            |------|------|
-            | Windows | `.exe` 安装包 |
-            | macOS (Universal) | `.dmg` 安装包 |
-            | Linux (deb) | `.deb` 安装包 |
-            | Linux (AppImage) | `.AppImage` |
-          files: all-assets/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          | 平台 | 文件 |
+          |------|------|
+          | Windows | \`.exe\` 安装包 |
+          | macOS (Universal) | \`.dmg\` 安装包 |
+          | Linux (deb) | \`.deb\` 安装包 |
+          | Linux (AppImage) | \`.AppImage\` |" \
+            all-assets/*
