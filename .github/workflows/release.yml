@@ -8,24 +8,20 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   build:
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: windows-latest
-            args: '--bundles nsis'
-          - platform: macos-latest
-            args: '--target aarch64-apple-darwin'
-            rust_target: 'aarch64-apple-darwin'
-          - platform: macos-latest
-            args: '--target x86_64-apple-darwin'
-            rust_target: 'x86_64-apple-darwin'
-          - platform: ubuntu-22.04
-            args: '--bundles deb,appimage'
-
-    runs-on: ${{ matrix.platform }}
+          - os: windows-latest
+          - os: macos-latest
+          - os: ubuntu-22.04
 
     steps:
       - name: 检出代码
@@ -36,15 +32,12 @@ jobs:
         with:
           node-version: 20
 
-      - name: 安装 Rust 工具链（含交叉编译目标）
-        if: matrix.rust_target != ''
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.rust_target }}
-
       - name: 安装 Rust 工具链
-        if: matrix.rust_target == ''
         uses: dtolnay/rust-toolchain@stable
+
+      - name: 添加 macOS 双架构目标
+        if: runner.os == 'macOS'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
 
       - name: Rust 缓存
         uses: swatinem/rust-cache@v2
@@ -52,7 +45,7 @@ jobs:
           workspaces: './src-tauri -> target'
 
       - name: 安装 Linux 系统依赖
-        if: matrix.platform == 'ubuntu-22.04'
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
@@ -60,23 +53,62 @@ jobs:
       - name: 安装前端依赖
         run: npm install
 
-      - name: 构建 Tauri 应用
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 构建 Tauri (Windows)
+        if: runner.os == 'Windows'
+        run: npm run tauri build -- --bundles nsis
+
+      - name: 构建 Tauri (macOS)
+        if: runner.os == 'macOS'
+        run: npm run tauri build -- --target universal-apple-darwin
+
+      - name: 构建 Tauri (Linux)
+        if: runner.os == 'Linux'
+        run: npm run tauri build -- --bundles deb,appimage
+
+      - name: 收集 Windows 产物
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release-assets | Out-Null
+          Get-ChildItem -Path 'src-tauri/target/release/bundle/nsis' -Filter '*.exe' -ErrorAction SilentlyContinue |
+            ForEach-Object { Copy-Item $_.FullName release-assets/ }
+          Get-ChildItem release-assets/ | ForEach-Object { Write-Host $_.Name }
+
+      - name: 收集 macOS 产物
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p release-assets
+          find src-tauri/target/universal-apple-darwin/release/bundle -name "*.dmg" -exec cp {} release-assets/ \;
+          ls -la release-assets/
+
+      - name: 收集 Linux 产物
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p release-assets
+          find src-tauri/target/release/bundle -name "*.deb" -exec cp {} release-assets/ \;
+          find src-tauri/target/release/bundle -name "*.AppImage" -exec cp {} release-assets/ \;
+          ls -la release-assets/
+
+      - name: 上传 Release 资产
+        uses: softprops/action-gh-release@v2
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: '干了么 ${{ github.ref_name }}'
-          releaseBody: |
+          tag_name: ${{ github.ref_name }}
+          name: '干了么 ${{ github.ref_name }}'
+          draft: true
+          prerelease: false
+          body: |
             ## 下载安装
 
             | 平台 | 文件 |
             |------|------|
             | Windows | `.exe` 安装包 |
-            | macOS (Apple Silicon) | `aarch64.dmg` |
-            | macOS (Intel) | `x64.dmg` |
+            | macOS (Universal) | `.dmg` 安装包 |
             | Linux (deb) | `.deb` 安装包 |
             | Linux (AppImage) | `.AppImage` |
-          releaseDraft: true
-          prerelease: false
-          args: ${{ matrix.args }}
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
