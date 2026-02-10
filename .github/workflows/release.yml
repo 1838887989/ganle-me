@@ -131,7 +131,26 @@ jobs:
           find src-tauri/target/release/bundle -name "*.AppImage" -exec cp {} release-assets/ \;
           ls -la release-assets/
 
-      - name: 上传 Release 资产
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-${{ runner.os }}
+          path: release-assets/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: 下载所有构建产物
+        uses: actions/download-artifact@v4
+        with:
+          path: all-assets
+          merge-multiple: true
+
+      - name: 列出产物
+        run: ls -la all-assets/
+
+      - name: 创建 Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
@@ -147,6 +166,6 @@ jobs:
             | macOS (Universal) | `.dmg` 安装包 |
             | Linux (deb) | `.deb` 安装包 |
             | Linux (AppImage) | `.AppImage` |
-          files: release-assets/*
+          files: all-assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
