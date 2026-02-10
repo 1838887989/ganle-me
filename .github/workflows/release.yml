@@ -13,16 +13,14 @@ jobs:
         include:
           - platform: windows-latest
             args: ''
-            target: ''
           - platform: macos-latest
             args: '--target aarch64-apple-darwin'
-            target: 'aarch64-apple-darwin'
+            rust_target: 'aarch64-apple-darwin'
           - platform: macos-latest
             args: '--target x86_64-apple-darwin'
-            target: 'x86_64-apple-darwin'
+            rust_target: 'x86_64-apple-darwin'
           - platform: ubuntu-22.04
             args: ''
-            target: ''
 
     runs-on: ${{ matrix.platform }}
 
@@ -35,10 +33,20 @@ jobs:
         with:
           node-version: 20
 
-      - name: 安装 Rust 工具链
+      - name: 安装 Rust 工具链（含交叉编译目标）
+        if: matrix.rust_target != ''
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: ${{ matrix.rust_target }}
+
+      - name: 安装 Rust 工具链
+        if: matrix.rust_target == ''
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust 缓存
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
 
       - name: 安装 Linux 系统依赖
         if: matrix.platform == 'ubuntu-22.04'
@@ -56,7 +64,16 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: '干了么 ${{ github.ref_name }}'
-          releaseBody: '查看 [更新日志](https://github.com/1838887989/ganle-me/blob/main/CHANGELOG.md) 了解详情。'
+          releaseBody: |
+            ## 下载安装
+
+            | 平台 | 文件 |
+            |------|------|
+            | Windows | `.exe` 安装包 |
+            | macOS (Apple Silicon) | `aarch64.dmg` |
+            | macOS (Intel) | `x64.dmg` |
+            | Linux (deb) | `.deb` 安装包 |
+            | Linux (AppImage) | `.AppImage` |
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
