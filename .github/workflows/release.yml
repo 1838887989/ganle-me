@@ -150,6 +150,26 @@ jobs:
       - name: 列出产物
         run: ls -la all-assets/
 
+      - name: 清理已有 Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          TAG="${GITHUB_REF_NAME}"
+          REPO="${GITHUB_REPOSITORY}"
+          RELEASE_ID=$(curl -s -H "Authorization: token $GH_TOKEN" \
+            "https://api.github.com/repos/$REPO/releases/tags/$TAG" | \
+            grep '"id"' | head -1 | grep -o '[0-9]*' || true)
+          if [ -n "$RELEASE_ID" ]; then
+            echo "删除已有 Release ID: $RELEASE_ID"
+            curl -s -X DELETE -H "Authorization: token $GH_TOKEN" \
+              "https://api.github.com/repos/$REPO/releases/$RELEASE_ID"
+            echo "已删除"
+          else
+            echo "无需清理"
+          fi
+
       - name: 创建 Release
         uses: softprops/action-gh-release@v2
         with:
