@@ -1,0 +1,430 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 有机生物亲和设计 - 基础样式 */
+@layer base {
+  :root {
+    --color-primary: #228B22;
+    --color-secondary: #6B7B3C;
+    --color-accent: #CA8A04;
+    --color-cream: #F5F0E1;
+  }
+
+  html, body {
+    @apply bg-transparent overflow-hidden antialiased;
+  }
+
+  body {
+    @apply font-body text-gray-800;
+    transition: color 0.3s ease;
+  }
+
+  .dark body {
+    @apply text-dark-text;
+  }
+
+  /* 标题字体 */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-semibold;
+  }
+
+  /* 自定义滚动条 - 有机风格 */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-cream-300 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-secondary/40 rounded-full;
+    transition: background-color 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-secondary/60;
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    @apply bg-dark-surface;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-dark-border;
+  }
+}
+
+@layer components {
+  /* 有机卡片样式 */
+  .card-organic {
+    @apply bg-white/90 backdrop-blur-sm rounded-organic shadow-organic;
+    @apply border border-cream-300/50;
+    transition: all 0.3s ease;
+  }
+
+  .dark .card-organic {
+    @apply bg-dark-surface/90 border-dark-border shadow-organic-dark;
+  }
+
+  .card-organic:hover {
+    @apply shadow-organic-lg;
+  }
+
+  /* 按钮基础样式 */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2;
+    @apply px-4 py-2 rounded-organic font-medium;
+    @apply transition-all duration-200 ease-out;
+    @apply cursor-pointer select-none;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary text-white;
+    @apply hover:bg-primary-600;
+    @apply focus:ring-primary/50;
+  }
+
+  .btn-secondary {
+    @apply btn bg-secondary text-white;
+    @apply hover:bg-secondary-600;
+    @apply focus:ring-secondary/50;
+  }
+
+  .btn-accent {
+    @apply btn bg-accent text-white;
+    @apply hover:bg-accent-600;
+    @apply focus:ring-accent/50;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-gray-700;
+    @apply hover:bg-cream-300;
+    @apply focus:ring-cream-400;
+  }
+
+  .dark .btn-ghost {
+    @apply text-dark-text hover:bg-dark-border;
+  }
+
+  /* 输入框样式 */
+  .input-organic {
+    @apply w-full px-4 py-3 rounded-organic;
+    @apply bg-white border-2 border-cream-300;
+    @apply text-gray-800 placeholder-gray-400;
+    @apply transition-all duration-200;
+    @apply focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20;
+  }
+
+  .dark .input-organic {
+    @apply bg-dark-surface border-dark-border;
+    @apply text-dark-text placeholder-dark-muted;
+    @apply focus:border-primary-400;
+  }
+
+  /* 复选框样式 */
+  .checkbox-organic {
+    @apply w-5 h-5 rounded-md border-2 border-secondary/40;
+    @apply cursor-pointer transition-all duration-200;
+    @apply checked:bg-primary checked:border-primary;
+    @apply focus:ring-2 focus:ring-primary/30 focus:ring-offset-2;
+  }
+
+  /* 侧边栏项目样式 */
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-organic;
+    @apply text-gray-700 font-medium;
+    @apply cursor-pointer transition-all duration-200;
+    @apply hover:bg-cream-300;
+  }
+
+  .dark .sidebar-item {
+    @apply text-dark-text hover:bg-dark-border;
+  }
+
+  .sidebar-item.active {
+    @apply bg-primary/10 text-primary;
+  }
+
+  .dark .sidebar-item.active {
+    @apply bg-primary/20 text-primary-300;
+  }
+
+  /* 任务项样式 */
+  .task-item {
+    @apply flex items-center gap-4 p-4 rounded-organic;
+    @apply bg-white/70 border border-cream-300/50;
+    @apply cursor-pointer transition-all duration-200;
+    @apply hover:bg-white hover:shadow-organic;
+  }
+
+  .dark .task-item {
+    @apply bg-dark-surface/70 border-dark-border;
+    @apply hover:bg-dark-surface;
+  }
+
+  .task-item.completed {
+    @apply opacity-60;
+  }
+
+  .task-item.completed .task-title {
+    @apply line-through text-gray-400;
+  }
+
+  /* 标签样式 */
+  .tag {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply cursor-pointer transition-colors duration-200;
+  }
+
+  /* 优先级标签 */
+  .priority-high {
+    @apply bg-red-100 text-red-700;
+  }
+
+  .dark .priority-high {
+    @apply bg-red-900/30 text-red-400;
+  }
+
+  .priority-medium {
+    @apply bg-accent-100 text-accent-700;
+  }
+
+  .dark .priority-medium {
+    @apply bg-accent-900/30 text-accent-400;
+  }
+
+  .priority-low {
+    @apply bg-primary-100 text-primary-700;
+  }
+
+  .dark .priority-low {
+    @apply bg-primary-900/30 text-primary-400;
+  }
+
+  /* 窗口控制按钮 */
+  .window-control {
+    @apply w-3 h-3 rounded-full cursor-pointer;
+    @apply transition-opacity duration-200 hover:opacity-80;
+  }
+
+  .window-control-close {
+    @apply bg-red-500;
+  }
+
+  .window-control-minimize {
+    @apply bg-yellow-500;
+  }
+
+  .window-control-maximize {
+    @apply bg-green-500;
+  }
+}
+
+@layer utilities {
+  /* 有机曲线装饰 */
+  .organic-blob {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+
+  /* 柔和阴影 */
+  .shadow-soft {
+    box-shadow: 0 2px 15px -3px rgba(34, 139, 34, 0.1),
+                0 4px 6px -2px rgba(34, 139, 34, 0.05);
+  }
+
+  /* 玻璃态效果 */
+  .glass-organic {
+    @apply bg-white/70 backdrop-blur-md;
+    @apply border border-white/20;
+  }
+
+  .dark .glass-organic {
+    @apply bg-dark-surface/70 border-dark-border/50;
+  }
+}
+
+/* ========== 极简模式样式 ========== */
+.minimal-container {
+  @apply w-full h-full flex flex-col;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  transition: background-color 0.2s;
+  --opacity-value: 1;
+}
+
+.dark .minimal-container {
+  border-color: rgba(60, 60, 80, 0.6);
+}
+
+.minimal-header {
+  @apply flex items-center justify-between px-4 py-2;
+  @apply relative z-50;
+}
+
+.minimal-icon-btn {
+  @apply w-7 h-7 flex items-center justify-center rounded-full;
+  @apply cursor-pointer transition-colors;
+  @apply hover:bg-cream-300 dark:hover:bg-dark-border;
+}
+
+.minimal-settings-panel {
+  @apply absolute right-12 top-full mt-2;
+  @apply w-44 p-2 bg-white dark:bg-dark-surface rounded-2xl;
+  @apply shadow-organic border border-cream-300 dark:border-dark-border;
+  @apply z-50;
+}
+
+.settings-item {
+  @apply flex items-center justify-between px-3 py-2 rounded-xl;
+  @apply text-sm text-gray-700 dark:text-gray-200;
+  @apply cursor-pointer transition-colors;
+  @apply hover:bg-gray-100 dark:hover:bg-gray-700;
+}
+
+.minimal-toggle {
+  @apply relative w-9 h-5 rounded-full bg-cream-300 dark:bg-dark-border;
+  @apply transition-colors;
+}
+
+.minimal-toggle.active {
+  @apply bg-primary;
+}
+
+.minimal-toggle .toggle-dot {
+  @apply absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white;
+  @apply transition-transform;
+}
+
+.minimal-toggle.active .toggle-dot {
+  @apply translate-x-5;
+}
+
+.minimal-title-section {
+  @apply flex items-start justify-between px-5 py-2;
+}
+
+.minimal-clear-btn {
+  @apply flex items-center gap-1 px-3 py-1.5 rounded-full;
+  @apply text-sm text-red-500 border border-red-200;
+  @apply cursor-pointer transition-colors;
+  @apply hover:bg-red-50 dark:hover:bg-red-900/20;
+}
+
+.minimal-input-section {
+  @apply flex items-center gap-2 px-4 py-2;
+}
+
+.minimal-input {
+  @apply flex-1 px-3 py-2.5 rounded-2xl;
+  @apply text-gray-800 dark:text-cream text-sm;
+  @apply placeholder-gray-400;
+  @apply border-0 outline-none;
+  background-color: rgba(255, 255, 255, calc(var(--opacity-value) * 0.8));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, calc(var(--opacity-value) * 0.05));
+}
+
+.dark .minimal-input {
+  background-color: rgba(45, 45, 55, calc(var(--opacity-value) * 0.8));
+}
+
+.minimal-time-btn {
+  @apply w-10 h-10 flex items-center justify-center rounded-2xl;
+  @apply cursor-pointer transition-colors;
+  @apply hover:bg-cream-200 dark:hover:bg-dark-border;
+  background-color: rgba(255, 255, 255, calc(var(--opacity-value) * 0.8));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, calc(var(--opacity-value) * 0.05));
+}
+
+.dark .minimal-time-btn {
+  background-color: rgba(45, 45, 55, calc(var(--opacity-value) * 0.8));
+}
+
+.minimal-add-btn {
+  @apply w-12 h-12 flex items-center justify-center rounded-2xl;
+  @apply bg-primary shadow-lg;
+  @apply cursor-pointer transition-all;
+  @apply hover:bg-primary-600 hover:scale-105;
+}
+
+.minimal-task-list {
+  @apply flex-1 overflow-y-auto px-4 py-2 space-y-2;
+}
+
+.minimal-task-item {
+  @apply flex items-start gap-3 p-3 rounded-2xl;
+  @apply transition-all;
+  background-color: rgba(255, 255, 255, calc(var(--opacity-value) * 0.8));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, calc(var(--opacity-value) * 0.05));
+}
+
+.dark .minimal-task-item {
+  background-color: rgba(45, 45, 55, calc(var(--opacity-value) * 0.8));
+}
+
+.minimal-task-item.completed {
+  @apply opacity-60;
+}
+
+.minimal-checkbox {
+  @apply w-6 h-6 flex-shrink-0 rounded-full;
+  @apply border-2 border-cream-300 dark:border-dark-border;
+  @apply flex items-center justify-center;
+  @apply cursor-pointer transition-all;
+}
+
+.minimal-checkbox.checked {
+  @apply bg-primary border-primary;
+}
+
+.minimal-task-title {
+  @apply text-sm text-gray-800 dark:text-cream;
+}
+
+.minimal-task-time {
+  @apply flex items-center gap-1 mt-1;
+  @apply text-xs text-gray-400;
+}
+
+.minimal-empty {
+  @apply flex items-center justify-center py-12;
+}
+
+/* ========== 子任务样式 ========== */
+.subtask-container {
+  @apply ml-10 pl-4 py-2 border-l-2 border-cream-300 dark:border-dark-border;
+}
+
+.subtask-item {
+  @apply flex items-center gap-2 py-1.5 px-2 rounded-lg;
+  @apply transition-colors duration-150;
+  @apply hover:bg-cream-200 dark:hover:bg-dark-border/50;
+}
+
+.subtask-checkbox {
+  @apply w-4 h-4 flex-shrink-0 rounded-full;
+  @apply border-2 border-secondary/40 dark:border-dark-border;
+  @apply flex items-center justify-center;
+  @apply cursor-pointer transition-all duration-200;
+}
+
+.subtask-checkbox:hover {
+  @apply border-primary;
+}
+
+.subtask-checkbox.checked {
+  @apply bg-primary border-primary;
+}
+
+.subtask-input {
+  @apply flex-1 px-3 py-1.5 rounded-lg text-sm;
+  @apply bg-cream-200 dark:bg-dark-border/50;
+  @apply text-gray-700 dark:text-dark-text;
+  @apply placeholder-gray-400 dark:placeholder-dark-muted;
+  @apply border-0 outline-none;
+  @apply focus:ring-2 focus:ring-primary/30;
+  @apply transition-all duration-200;
+}
