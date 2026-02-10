@@ -21,26 +21,33 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set +e
           TAG="${GITHUB_REF_NAME}"
           REPO="${GITHUB_REPOSITORY}"
           # 查找该 tag 对应的 release（包括草稿）
           RELEASE_ID=$(curl -s -H "Authorization: token $GH_TOKEN" \
             "https://api.github.com/repos/$REPO/releases/tags/$TAG" | \
-            grep '"id"' | head -1 | grep -o '[0-9]*')
+            grep '"id"' | head -1 | grep -o '[0-9]*' || true)
           if [ -n "$RELEASE_ID" ]; then
             echo "删除旧 Release ID: $RELEASE_ID"
             curl -s -X DELETE -H "Authorization: token $GH_TOKEN" \
               "https://api.github.com/repos/$REPO/releases/$RELEASE_ID"
+          else
+            echo "没有找到 tag $TAG 对应的 Release"
           fi
           # 也清理 untagged 的草稿 release
-          curl -s -H "Authorization: token $GH_TOKEN" \
+          DRAFT_IDS=$(curl -s -H "Authorization: token $GH_TOKEN" \
             "https://api.github.com/repos/$REPO/releases" | \
-            grep -B2 '"draft": true' | grep '"id"' | grep -o '[0-9]*' | \
-            while read id; do
+            grep -B2 '"draft": true' | grep '"id"' | grep -o '[0-9]*' || true)
+          if [ -n "$DRAFT_IDS" ]; then
+            echo "$DRAFT_IDS" | while read id; do
               echo "删除草稿 Release ID: $id"
               curl -s -X DELETE -H "Authorization: token $GH_TOKEN" \
                 "https://api.github.com/repos/$REPO/releases/$id"
             done
+          else
+            echo "没有草稿 Release 需要清理"
+          fi
           echo "清理完成"
 
   build:
